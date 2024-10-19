@@ -1,102 +1,91 @@
--- Load the game
-repeat task.wait() until game:IsLoaded()
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+local bot = script.Parent -- Assuming this script is a child of the bot model
+local state = "saying" -- Initial state
+local singing = false -- Flag to indicate if the bot is currently singing
 
-if not getgenv().executedHi then
-    getgenv().executedHi = true
-else
-    return
+-- Function to announce the bot's presence
+local function announce()
+    bot:Chat("🤖 | Lyrics bot! Type '>play [SongName]' or '>play [SongName]{Artist}' and I will sing it!")
 end
 
-local httprequest = (syn and syn.request) or http and http.request or http_request or (fluxus and fluxus.request) or request
-local HttpService = game:GetService('HttpService')
-local state = "saying"  -- Initial state
-
-local function sendMessage(text)
-    game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(text, "All")
-end
-
--- Function to sing lyrics line by line
+-- Function to handle the singing of lyrics
 local function singLyrics(lyrics)
-    for line in string.gmatch(lyrics, "[^\n]+") do
-        if state == "saying" then
-            break  -- Stop singing if state changes to saying
-        end
-        sendMessage('🎙️ | ' .. line)
-        task.wait(4.7)  -- Delay between lines
+    local lines = lyrics:split("\n") -- Split lyrics into lines
+    singing = true -- Set singing flag
+    for _, line in ipairs(lines) do
+        if not singing then break end -- Exit if singing is stopped
+        bot:Chat("🎙️ | " .. line)
+        wait(2) -- Wait 2 seconds between lines
     end
+    singing = false -- Reset singing flag
 end
 
--- Function to handle user messages
-local function onMessage(msgdata)
-    if msgdata.FromSpeaker == "YourBotNameHere" then
-        return  -- Ignore messages from the bot itself
-    end
+-- Function to handle commands
+local function onPlayerChatted(player, message)
+    if message == "" then return end -- Ignore empty messages
 
-    if string.lower(msgdata.Message) == '>stop' and state == "singing" then
-        state = "saying"  -- Change state to saying
-        sendMessage('Stopped singing. You can request songs again.')
+    -- Check if already singing
+    if singing and message:lower() ~= ">stop" then
+        bot:Chat("🎶 | I'm already singing! Use '>stop' to stop before playing a new song.")
         return
     end
 
-    -- Match the play command for lyrics
-    local songCommand = string.match(msgdata.Message, '^>play%s*%[([^%]]+)%]%s*{([^}]+)}$') or string.match(msgdata.Message, '^>play%s*%[([^%]]+)%]$')
-    
-    if songCommand then
-        local songName, artist = string.match(msgdata.Message, '^>play%s*%[([^%]]+)%]%s*{([^}]+)}$')
-        songName = songName:gsub(" ", "%20"):lower()  -- Format the song name
-        artist = artist and artist:gsub(" ", "%20"):lower() or ""  -- Format the artist name, if present
+    if state == "saying" then
+        local songName, artist = message:match("^>play%s%[(.-)%]%{(.-)%}$")
+        if songName and artist then
+            local url = "https://lyrist.vercel.app/api/" .. HttpService:UrlEncode(songName) .. "/" .. HttpService:UrlEncode(artist)
+            
+            -- Fetch lyrics from the API
+            local success, response = pcall(function()
+                return HttpService:GetAsync(url)
+            end)
 
-        local response
-        local suc, err = pcall(function()
-            response = httprequest({
-                Url = "https://lyrist.vercel.app/api/" .. songName .. (artist ~= "" and "/" .. artist or ""),
-                Method = "GET",
-            })
-        end)
+            if not success then
+                bot:Chat("⚠️ | Error fetching lyrics. Please try again.")
+                return
+            end
 
-        if not suc or not response or not response.Body then
-            sendMessage('Error fetching lyrics. Please try again.')
-            state = "saying"  -- Reset state to saying
-            return
+            local success, data = pcall(function()
+                return HttpService:JSONDecode(response)
+            end)
+
+            if not success or not data.lyrics then
+                bot:Chat("⚠️ | No lyrics found for that song.")
+                return
+            end
+
+            -- Start singing
+            state = "singing"
+            singLyrics(data.lyrics)
+            state = "saying" -- Return to saying state after singing
+            announce()
+        else
+            bot:Chat("⚠️ | Invalid command format. Use '>play [SongName]{Artist}'.")
         end
-
-        local lyricsData = HttpService:JSONDecode(response.Body)
-
-        if lyricsData.error and lyricsData.error == "Lyrics Not found" then
-            sendMessage('Lyrics not found. Please check the song and artist names.')
-            state = "saying"  -- Reset state to saying
-            return
-        end
-
-        if not lyricsData.lyrics then
-            sendMessage('No lyrics available for this song.')
-            state = "saying"  -- Reset state to saying
-            return
-        end
-
-        state = "singing"  -- Change state to singing
-        sendMessage('Fetching lyrics for ' .. songName .. ' by ' .. (artist ~= "" and artist or "Unknown") .. '...')
-        task.wait(2)  -- Wait before starting to sing
-        singLyrics(lyricsData.lyrics)  -- Sing the lyrics
-        state = "saying"  -- Return to saying state after singing
-        sendMessage('Ended. You can request songs again.')
+    elseif state == "singing" and message:lower() == ">stop" then
+        -- Stop singing immediately
+        singing = false -- Stop singing
+        bot:Chat("🎶 | Stopped singing. You can now request a new song.")
+        state = "saying"
+        announce()
     end
 end
 
--- Function to remind players about commands every 10 seconds
-local function remindCommands()
-    while task.wait(10) do
-        if state == "saying" then
-            sendMessage('🤖 | Lyrics bot! Type ">play [SongName]" or ">play [SongName]{Artist}" and I will sing it!')
-        end
+-- Connect player chat events
+Players.PlayerAdded:Connect(function(player)
+    player.Chatted:Connect(function(message)
+        onPlayerChatted(player, message)
+    end)
+end)
+
+-- Announce bot on load
+announce()
+
+-- Repeat the announcement every 10 seconds
+while true do
+    wait(10)
+    if state == "saying" then
+        announce()
     end
 end
-
--- Connect the message event
-game:GetService('ReplicatedStorage').DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClientEvent:Connect(onMessage)
-
--- Start the reminder function in a separate thread
-task.spawn(remindCommands)
-
--- Initial bot message
-sendMessage('🤖 | Lyrics bot! Type ">play [SongName]" or ">play [SongName]{Artist}" and I will sing it!')
