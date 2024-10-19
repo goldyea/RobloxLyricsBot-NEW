@@ -28,12 +28,12 @@ game:GetService('ReplicatedStorage').DefaultChatSystemChatEvents:WaitForChild('O
         end
     end
 
-    if state == "saying" and string.match(msgdata.Message, '>lyrics "?.-"') then
+    if state == "saying" and string.match(msgdata.Message, '>lyrics (.+)') then
         state = "singing"  -- Change state to singing
         plr = game:GetService('Players')[msgdata.FromSpeaker].Name
 
-        local msg = string.lower(msgdata.Message):gsub('>lyrics ', ''):gsub('"', '')
-        local songName, artist = string.match(msg, "(.-) by (.*)")
+        local msg = string.lower(msgdata.Message):gsub('>lyrics ', '')
+        local songName, artist = string.match(msg, "(.+)%s+by%s+(.+)")
 
         if artist and artist ~= "" then
             artist = artist:gsub(" ", "%20"):lower()
@@ -65,8 +65,6 @@ game:GetService('ReplicatedStorage').DefaultChatSystemChatEvents:WaitForChild('O
             return
         end
 
-        local lyricsTable = {}
-
         if lyricsData.error and lyricsData.error == "Lyrics Not found" then
             sendMessage('Lyrics were not found')
             state = "saying"  -- Change state back to saying
@@ -96,13 +94,13 @@ end)
 task.spawn(function()
     while task.wait(20) do
         if state == "saying" then
-            sendMessage('I am a lyrics bot! Type ">lyrics "SongName"" and I will sing the song for you!')
+            sendMessage('I am a lyrics bot! Type ">lyrics SongName" and I will sing the song for you!')
             task.wait(2)
-            sendMessage('Example: ">lyrics "SongName"" or ">lyrics "SongName" by "Artist""')
+            sendMessage('Example: ">lyrics SongName" or ">lyrics SongName by Artist"')
         end
     end
 end)
 
-sendMessage('I am a lyrics bot! Type ">lyrics "SongName"" and I will sing the song for you!')
+sendMessage('I am a lyrics bot! Type ">lyrics SongName" and I will sing the song for you!')
 task.wait(2)
-sendMessage('Example: ">lyrics "SongName"" or ">lyrics "SongName" by "Artist""')
+sendMessage('Example: ">lyrics SongName" or ">lyrics SongName by Artist"')
