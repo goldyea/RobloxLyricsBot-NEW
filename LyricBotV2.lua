@@ -28,26 +28,25 @@ game:GetService('ReplicatedStorage').DefaultChatSystemChatEvents:WaitForChild('O
         end
     end
 
-    if state == "saying" and string.match(msgdata.Message, '>lyrics "?.-" by "?.-"') then
+    if state == "saying" and string.match(msgdata.Message, '>lyrics "?.-"') then
         state = "singing"  -- Change state to singing
         plr = game:GetService('Players')[msgdata.FromSpeaker].Name
 
-        local msg = string.lower(msgdata.Message):gsub('>lyrics ', ''):gsub('"', ''):gsub(' by ', '/')
-        local songName, artist = string.match(msg, "(.-)/(.-)$")
+        local msg = string.lower(msgdata.Message):gsub('>lyrics ', ''):gsub('"', '')
+        local songName, artist = string.match(msg, "(.-) by (.*)")
 
-        if songName and artist then
-            songName = songName:gsub(" ", "%20"):lower()
+        if artist and artist ~= "" then
             artist = artist:gsub(" ", "%20"):lower()
         else
-            sendMessage('Invalid command format. Please use ">lyrics SongName by Artist"')
-            state = "saying"  -- Change state back to saying
-            return
+            songName = msg:gsub(" ", "%20"):lower()  -- If no artist provided, use songName
         end
+        
+        songName = songName:gsub(" ", "%20"):lower()  -- Ensure songName is formatted correctly
 
         local response
         local suc, er = pcall(function()
             response = httprequest({
-                Url = "https://lyrist.vercel.app/api/" .. songName .. "/" .. artist,
+                Url = "https://lyrist.vercel.app/api/" .. songName .. (artist and "/" .. artist or ""),
                 Method = "GET",
             })
         end)
@@ -97,13 +96,13 @@ end)
 task.spawn(function()
     while task.wait(20) do
         if state == "saying" then
-            sendMessage('I am a lyrics bot! Type ">lyrics SongName by Artist" and I will sing the song for you!')
+            sendMessage('I am a lyrics bot! Type ">lyrics "SongName"" and I will sing the song for you!')
             task.wait(2)
-            sendMessage('Example: ">lyrics SongName by Artist"')
+            sendMessage('Example: ">lyrics "SongName"" or ">lyrics "SongName" by "Artist""')
         end
     end
 end)
 
-sendMessage('I am a lyrics bot! Type ">lyrics SongName by Artist" and I will sing the song for you!')
+sendMessage('I am a lyrics bot! Type ">lyrics "SongName"" and I will sing the song for you!')
 task.wait(2)
-sendMessage('Example: ">lyrics SongName by Artist"')
+sendMessage('Example: ">lyrics "SongName"" or ">lyrics "SongName" by "Artist""')
