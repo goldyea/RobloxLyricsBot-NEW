@@ -30,7 +30,10 @@ end
 
 -- Function to fetch lyrics from the API
 local function fetchLyrics(songName, artist)
-    local url = "https://lyrist.vercel.app/api/" .. songName:gsub(" ", "%20") .. (artist and "/" .. artist:gsub(" ", "%20") or "")
+    local url = "https://lyrist.vercel.app/api/" .. songName:gsub(" ", "%20")
+    if artist then
+        url = url .. "/" .. artist:gsub(" ", "%20")
+    end
     
     local response
     local success, err = pcall(function()
@@ -87,7 +90,7 @@ local function onMessage(msgdata)
 
         -- Fetch lyrics using the new function
         local lyrics = fetchLyrics(songName, artist)
-        if not lyrics or lyrics == "No lyrics found." then
+        if lyrics == "No lyrics found." then
             sendMessage('No lyrics available for this song.')
             return
         end
@@ -119,8 +122,8 @@ task.spawn(remindCommands)
 -- Initial bot message
 sendMessage('🤖 | Lyrics bot! Type ">play [SongName]" or ">play [SongName]{Artist}" and I will sing it!')
 
--- Example call to fetch lyrics for "Clarity" by Zedd
-local exampleSong = "Clarity"
-local exampleArtist = "Zedd"
+-- Example call to fetch lyrics for "Clarity"
+local exampleSong = "clarity"
+local exampleArtist = nil  -- No artist specified
 local lyrics = fetchLyrics(exampleSong, exampleArtist)
 sendMessage(lyrics)  -- Send the fetched lyrics as a message
