@@ -79,11 +79,11 @@ local function onMessage(msgdata)
         songName, artist = string.match(msgdata.Message, '^>play%s*%[([^%]]+)%]%s*{([^}]+)}$')
     elseif songOnlyCommand then
         songName = string.match(msgdata.Message, '^>play%s*%[([^%]]+)%]$')
+        artist = nil  -- No artist specified
     end
 
     if songName then
         songName = songName:gsub(" ", "%20"):lower()  -- Format the song name
-        artist = artist and artist:gsub(" ", "%20"):lower() or ""  -- Format the artist name, if present
 
         -- Fetch lyrics using the new function
         local lyrics = fetchLyrics(songName, artist)
@@ -103,7 +103,7 @@ end
 
 -- Function to remind players about commands
 local function remindCommands()
-    while task.wait(20) do
+    while task.wait(10) do
         if state == "saying" then
             sendMessage('🤖 | Lyrics bot! Type ">play [SongName]" or ">play [SongName]{Artist}" and I will sing it!')
         end
