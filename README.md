@@ -20,8 +20,8 @@ Players can interact with the lyrics bot using the following commands in the gam
 - `>stop`: Stop the lyrics playback at any time.
 
 **Example**:
-- `>lyrics "Shape of You"`
-- `>lyrics "Shape of You" by "Ed Sheeran"`
+- `>lyrics Shape of You`
+- `>lyrics Shape of You" by "Ed Sheeran`
 
 ## API Endpoint
 
