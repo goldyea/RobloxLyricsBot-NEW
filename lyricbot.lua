@@ -9,7 +9,6 @@ end
 
 local httprequest = (syn and syn.request) or http and http.request or http_request or (fluxus and fluxus.request) or request
 
-local plr
 local state = "saying"  -- Initial state
 
 local function sendMessage(text)
@@ -21,31 +20,28 @@ game:GetService('ReplicatedStorage').DefaultChatSystemChatEvents:WaitForChild('O
         return  -- Don't process commands while singing
     end
 
-    plr = game:GetService('Players')[msgdata.FromSpeaker]  -- Get player once
+    local playerName = msgdata.FromSpeaker  -- Get player name
 
-    if plr and (msgdata.FromSpeaker == game.Players.LocalPlayer.Name) then
+    -- Ignore messages from the bot itself
+    if playerName == "YourBotNameHere" then
+        return  -- Replace 'YourBotNameHere' with the actual name of your bot
+    end
+
+    if playerName == game.Players.LocalPlayer.Name then
         if string.lower(msgdata.Message) == '>stop' then
             state = "saying"  -- Change state to saying
             sendMessage('Stopped singing. You can request songs again.')
             return
         end
 
-        -- Ignore messages from the bot itself
-        if msgdata.FromSpeaker == "YourBotNameHere" then
-            return  -- Replace 'YourBotNameHere' with the actual name of your bot
-        end
-
         -- Match the lyrics command
-        local lyricsCommand = string.match(string.lower(msgdata.Message), '>lyrics "([^"]+)"')
+        local lyricsCommand = string.match(msgdata.Message, '^>lyrics%s*(.-)%s*by%s*(.*)$') or string.match(msgdata.Message, '^>lyrics%s*(.-)$')
+        
         if lyricsCommand then
             state = "singing"  -- Change state to singing
-            local songName, artist = lyricsCommand, ""
-
-            -- Check for artist in the message
-            local artistMatch = string.match(msgdata.Message, '>lyrics "([^"]+)" by "([^"]+)"')
-            if artistMatch then
-                songName, artist = string.match(msgdata.Message, '>lyrics "([^"]+)" by "([^"]+)"')
-            end
+            local songName, artist = lyricsCommand[1], lyricsCommand[2]
+            songName = songName or ""
+            artist = artist or ""
 
             -- Check if songName is valid
             if not songName or songName:trim() == "" then
@@ -66,7 +62,13 @@ game:GetService('ReplicatedStorage').DefaultChatSystemChatEvents:WaitForChild('O
                 })
             end)
 
-            if not suc or not response or not response.Body then
+            if not suc then
+                sendMessage('Error: ' .. err)
+                state = "saying"  -- Change state back to saying
+                return
+            end
+
+            if not response or not response.Body then
                 sendMessage('Unexpected error or empty response. Please retry.')
                 state = "saying"  -- Change state back to saying
                 return
@@ -88,7 +90,7 @@ game:GetService('ReplicatedStorage').DefaultChatSystemChatEvents:WaitForChild('O
 
             sendMessage('Fetched lyrics')
             task.wait(2)
-            sendMessage('Playing song requested by ' .. plr.DisplayName .. '. They can stop it by saying ">stop"')
+            sendMessage('Playing song requested by ' .. msgdata.FromSpeaker .. '. They can stop it by saying ">stop"')
             task.wait(3)
 
             for line in string.gmatch(lyricsData.lyrics, "[^\n]+") do
@@ -97,7 +99,7 @@ game:GetService('ReplicatedStorage').DefaultChatSystemChatEvents:WaitForChild('O
                 end
 
                 sendMessage('🎙️ | ' .. line)
-                task.wait(4.7)
+                task.wait(4.7)  -- Adjust the delay as necessary for pacing
             end
 
             task.wait(3)
@@ -107,6 +109,7 @@ game:GetService('ReplicatedStorage').DefaultChatSystemChatEvents:WaitForChild('O
     end
 end)
 
+-- Periodically remind players of commands
 task.spawn(function()
     while task.wait(20) do
         if state == "saying" then
@@ -117,6 +120,7 @@ task.spawn(function()
     end
 end)
 
+-- Initial bot message
 sendMessage('I am a lyrics bot! Type ">lyrics "SongName"" and I will sing the song for you!')
 task.wait(2)
 sendMessage('Example: ">lyrics "SongName"" or ">lyrics "SongName" by "Artist""')
