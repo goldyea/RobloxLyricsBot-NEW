@@ -30,7 +30,7 @@ end
 
 -- Function to fetch lyrics from the API
 local function fetchLyrics(songName, artist)
-    local url = "https://lyrist.vercel.app/api/" .. songName:gsub(" ", "%20") .. "/" .. (artist and artist:gsub(" ", "%20") or "")
+    local url = "https://lyrist.vercel.app/api/" .. songName:gsub(" ", "%20") .. (artist and "/" .. artist:gsub(" ", "%20") or "")
     
     local response
     local success, err = pcall(function()
@@ -70,11 +70,18 @@ local function onMessage(msgdata)
         return
     end
 
-    -- Check for song request
+    -- Check for song request with or without artist
     local songCommand = string.match(msgdata.Message, '^>play%s*%[([^%]]+)%]%s*{([^}]+)}$')  -- Matches ">play [SongName]{Artist}"
-    
+    local songOnlyCommand = string.match(msgdata.Message, '^>play%s*%[([^%]]+)%]$') -- Matches ">play [SongName]"
+
+    local songName, artist
     if songCommand then
-        local songName, artist = string.match(msgdata.Message, '^>play%s*%[([^%]]+)%]%s*{([^}]+)}$')
+        songName, artist = string.match(msgdata.Message, '^>play%s*%[([^%]]+)%]%s*{([^}]+)}$')
+    elseif songOnlyCommand then
+        songName = string.match(msgdata.Message, '^>play%s*%[([^%]]+)%]$')
+    end
+
+    if songName then
         songName = songName:gsub(" ", "%20"):lower()  -- Format the song name
         artist = artist and artist:gsub(" ", "%20"):lower() or ""  -- Format the artist name, if present
 
@@ -96,9 +103,9 @@ end
 
 -- Function to remind players about commands
 local function remindCommands()
-    while task.wait(10) do
+    while task.wait(20) do
         if state == "saying" then
-            sendMessage('🤖 | Lyrics bot! Type ">play [SongName]" or ">play "[SongName]{Artist}" and I will sing it!')
+            sendMessage('🤖 | Lyrics bot! Type ">play [SongName]" or ">play [SongName]{Artist}" and I will sing it!')
         end
     end
 end
@@ -110,7 +117,7 @@ game:GetService('ReplicatedStorage').DefaultChatSystemChatEvents.OnMessageDoneFi
 task.spawn(remindCommands)
 
 -- Initial bot message
-sendMessage('🤖 | Lyrics bot! Type ">play [SongName]" or ">play "[SongName]{Artist}" and I will sing it!')
+sendMessage('🤖 | Lyrics bot! Type ">play [SongName]" or ">play [SongName]{Artist}" and I will sing it!')
 
 -- Example call to fetch lyrics for "Clarity" by Zedd
 local exampleSong = "Clarity"
