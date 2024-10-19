@@ -44,7 +44,7 @@ game:GetService('ReplicatedStorage').DefaultChatSystemChatEvents:WaitForChild('O
 
             -- Format the song name and artist
             songName = songName:gsub(" ", "%20"):lower()  -- Ensure songName is formatted correctly
-            artist = artist:gsub(" ", "%20"):lower()  -- Ensure artist is formatted correctly, if present
+            artist = artist and artist:gsub(" ", "%20"):lower() or ""  -- Ensure artist is formatted correctly, if present
 
             local response
             local suc, err = pcall(function()
