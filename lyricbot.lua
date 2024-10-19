@@ -30,6 +30,11 @@ game:GetService('ReplicatedStorage').DefaultChatSystemChatEvents:WaitForChild('O
             return
         end
 
+        -- Ignore messages from the bot itself
+        if msgdata.FromSpeaker == "YourBotNameHere" then
+            return  -- Replace 'YourBotNameHere' with the actual name of your bot
+        end
+
         -- Match the lyrics command
         local lyricsCommand = string.match(string.lower(msgdata.Message), '>lyrics "([^"]+)"')
         if lyricsCommand then
@@ -40,6 +45,13 @@ game:GetService('ReplicatedStorage').DefaultChatSystemChatEvents:WaitForChild('O
             local artistMatch = string.match(msgdata.Message, '>lyrics "([^"]+)" by "([^"]+)"')
             if artistMatch then
                 songName, artist = string.match(msgdata.Message, '>lyrics "([^"]+)" by "([^"]+)"')
+            end
+
+            -- Check if songName is valid
+            if not songName or songName:trim() == "" then
+                sendMessage("Please provide a valid song name.")
+                state = "saying"  -- Reset state to saying
+                return
             end
 
             -- Format the song name and artist
