@@ -95,7 +95,7 @@ end
 
 -- Function to remind players about commands
 local function remindCommands()
-    while task.wait(10) do
+    while task.wait(20) do
         if state == "saying" then
             sendMessage('🤖 | Lyrics bot! Type ">play [SongName]" or ">play "[SongName]{Artist}" and I will sing it!')
         end
