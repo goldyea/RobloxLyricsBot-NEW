@@ -18,7 +18,7 @@ end
 -- Function to handle singing lyrics
 local function singLyrics(lyrics)
     for line in string.gmatch(lyrics, "[^\n]+") do
-        if state == "saying" then
+        if state ~= "singing" then
             break  -- Stop singing if state changes to saying
         end
         sendMessage('🎙️ | ' .. line)
@@ -28,7 +28,7 @@ end
 
 -- Function to handle user messages
 local function onMessage(msgdata)
-    if msgdata.FromSpeaker == "YourBotNameHere" then
+    if msgdata.FromSpeaker == "Decideaside" then
         return  -- Ignore messages from the bot itself
     end
 
@@ -38,7 +38,7 @@ local function onMessage(msgdata)
         return
     end
 
-    -- Match the play command for lyrics
+    -- Improved regex to match both formats for song requests
     local songCommand = string.match(msgdata.Message, '^>play%s*%[([^%]]+)%]%s*{([^}]+)}$')  -- Matches ">play [SongName]{Artist}"
     
     if songCommand then
@@ -54,16 +54,26 @@ local function onMessage(msgdata)
             })
         end)
 
-        if not suc or not response or not response.Body then
-            sendMessage('Error fetching lyrics. Please try again.')
+        -- Improved error handling
+        if not suc then
+            sendMessage('Error making HTTP request: ' .. tostring(err))
             state = "saying"  -- Reset state to saying
             return
         end
 
-        local lyricsData = game:GetService('HttpService'):JSONDecode(response.Body)
+        if not response or not response.Body then
+            sendMessage('Error: No response from the API.')
+            state = "saying"  -- Reset state to saying
+            return
+        end
 
-        if lyricsData.error and lyricsData.error == "Lyrics Not found" then
-            sendMessage('Lyrics not found. Please check the song and artist names.')
+        local lyricsData
+        local success, decodeErr = pcall(function()
+            lyricsData = game:GetService('HttpService'):JSONDecode(response.Body)
+        end)
+
+        if not success or not lyricsData or lyricsData.error then
+            sendMessage('Error fetching lyrics. Please check the song and artist names.')
             state = "saying"  -- Reset state to saying
             return
         end
