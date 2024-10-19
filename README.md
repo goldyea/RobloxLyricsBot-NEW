@@ -19,7 +19,7 @@ Players can interact with the lyrics bot using the following commands in the gam
 - `>lyrics "SongName" by "Artist"`: Fetch and play the lyrics for the song. (artist name is optional).
 - `>stop`: Stop the lyrics playback at any time.
 
-**Example**:
+**Examples**:
 - `>lyrics Shape of You`
 - `>lyrics Shape of You" by "Ed Sheeran`
 
