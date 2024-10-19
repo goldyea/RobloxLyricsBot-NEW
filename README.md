@@ -16,7 +16,7 @@ This Lua script is designed for a lyrics bot in a game. The bot fetches lyrics u
 Players can interact with the lyrics bot using the following commands in the game chat:
 
 - `>lyrics "SongName"`: Fetch and play the lyrics for the specified song.
-- `>lyrics "SongName" by "Artist"`: Fetch and play the lyrics for the song by the specified artist (artist name is optional).
+- `>lyrics "SongName" by "Artist"`: Fetch and play the lyrics for the song. (artist name is optional).
 - `>stop`: Stop the lyrics playback at any time.
 
 **Example**:
