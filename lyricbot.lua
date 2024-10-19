@@ -85,6 +85,7 @@ local function onMessage(msgdata)
         artist = nil  -- No artist specified
     end
 
+    -- Ensure songName is valid
     if songName then
         songName = songName:gsub(" ", "%20"):lower()  -- Format the song name
 
@@ -96,11 +97,13 @@ local function onMessage(msgdata)
         end
 
         state = "singing"  -- Change state to singing
-        sendMessage('Fetching lyrics for ' .. songName .. ' by ' .. (artist ~= "" and artist or "Unknown") .. '...')
+        sendMessage('Fetching lyrics for ' .. songName .. ' by ' .. (artist and artist or "Unknown") .. '...')
         task.wait(2)  -- Wait before starting to sing
         singLyrics(lyrics)  -- Sing the lyrics
         state = "saying"  -- Return to saying state after singing
         sendMessage('Ended. You can request songs again.')
+    else
+        sendMessage('Invalid song request. Please use ">play [SongName]" or ">play [SongName]{Artist}".')
     end
 end
 
