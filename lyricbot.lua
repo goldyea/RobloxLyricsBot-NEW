@@ -17,14 +17,25 @@ local function sendMessage(text)
     game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(text, "All")
 end
 
--- Function to handle singing lyrics
+-- Function to handle singing lyrics with dynamic pacing
 local function singLyrics(lyrics)
     for line in string.gmatch(lyrics, "[^\n]+") do
         if state ~= "singing" then
             break  -- Stop singing if state changes to saying
         end
+
         sendMessage('🎙️ | ' .. line)
-        task.wait(4.7)  -- Adjust the delay for pacing between lines
+
+        -- Calculate wait time based on line length
+        local lineLength = string.len(line)
+        local waitTime = 1  -- Default wait time for short lines
+
+        -- Increase wait time for longer lines
+        if lineLength > 50 then  -- Adjust this threshold as needed
+            waitTime = 2  -- Extra second for long lines
+        end
+
+        task.wait(waitTime)  -- Wait for the calculated time based on line length
     end
 end
 
@@ -121,9 +132,3 @@ task.spawn(remindCommands)
 
 -- Initial bot message
 sendMessage('🤖 | Lyrics bot! Type ">play [SongName]" or ">play [SongName]{Artist}" and I will sing it!')
-
--- Example call to fetch lyrics for "Clarity"
-local exampleSong = "clarity"
-local exampleArtist = nil  -- No artist specified
-local lyrics = fetchLyrics(exampleSong, exampleArtist)
-sendMessage(lyrics)  -- Send the fetched lyrics as a message
