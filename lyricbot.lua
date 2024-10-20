@@ -30,9 +30,12 @@ end
 
 -- Function to fetch lyrics from the API
 local function fetchLyrics(songName, artist)
-    local url = "https://lyrist.vercel.app/api/" .. songName:gsub(" ", "%20")
+    local formattedSongName = songName:gsub(" ", "%%20"):lower()
+    local url = "https://lyrist.vercel.app/api/" .. formattedSongName
+    
     if artist then
-        url = url .. "/" .. artist:gsub(" ", "%20")
+        local formattedArtist = artist:gsub(" ", "%%20"):lower()
+        url = url .. "/" .. formattedArtist
     end
     
     local response
@@ -43,8 +46,8 @@ local function fetchLyrics(songName, artist)
         })
     end)
 
-    -- Handle errors during the request
     if not success or not response then
+        print('Request Error: ' .. tostring(err))
         return 'Error fetching lyrics: ' .. tostring(err)
     end
 
@@ -53,7 +56,6 @@ local function fetchLyrics(songName, artist)
         lyricsData = game:GetService('HttpService'):JSONDecode(response.Body)
     end)
 
-    -- Handle decoding errors
     if not success or not lyricsData or lyricsData.error then
         return 'Error fetching lyrics: ' .. (lyricsData.error or tostring(err))
     end
@@ -68,39 +70,36 @@ local function onMessage(msgdata)
     end
 
     if string.lower(msgdata.Message) == '>stop' and state == "singing" then
-        state = "saying"  -- Change state to saying
+        state = "saying"
         sendMessage('Stopped singing. You can request songs again.')
         return
     end
 
-    -- Check for song request with or without artist
-    local songCommand = string.match(msgdata.Message, '^>play%s*%[([^%]]+)%]%s*{([^}]+)}$')  -- Matches ">play [SongName]{Artist}"
-    local songOnlyCommand = string.match(msgdata.Message, '^>play%s*%[([^%]]+)%]$') -- Matches ">play [SongName]"
+    local songCommand = string.match(msgdata.Message, '^>play%s*%[([^%]]+)%]%s*{([^}]+)}$')
+    local songOnlyCommand = string.match(msgdata.Message, '^>play%s*%[([^%]]+)%]$')
 
     local songName, artist
     if songCommand then
         songName, artist = string.match(msgdata.Message, '^>play%s*%[([^%]]+)%]%s*{([^}]+)}$')
     elseif songOnlyCommand then
         songName = string.match(msgdata.Message, '^>play%s*%[([^%]]+)%]$')
-        artist = nil  -- No artist specified
+        artist = nil
     end
 
-    -- Ensure songName is valid
     if songName then
-        songName = songName:gsub(" ", "%20"):lower()  -- Format the song name
+        songName = songName:gsub(" ", "%20"):lower()
 
-        -- Fetch lyrics using the new function
         local lyrics = fetchLyrics(songName, artist)
         if lyrics == "No lyrics found." then
             sendMessage('No lyrics available for this song.')
             return
         end
 
-        state = "singing"  -- Change state to singing
-        sendMessage('Fetching lyrics for ' .. songName .. ' by ' .. (artist and artist or "Unknown") .. '...')
-        task.wait(2)  -- Wait before starting to sing
-        singLyrics(lyrics)  -- Sing the lyrics
-        state = "saying"  -- Return to saying state after singing
+        state = "singing"
+        sendMessage('Fetching lyrics for ' .. songName .. ' by ' .. (artist or "Unknown") .. '... Please wait.')
+        task.wait(2)
+        singLyrics(lyrics)
+        state = "saying"
         sendMessage('Ended. You can request songs again.')
     else
         sendMessage('Invalid song request. Please use ">play [SongName]" or ">play [SongName]{Artist}".')
@@ -127,6 +126,6 @@ sendMessage('🤖 | Lyrics bot! Type ">play [SongName]" or ">play [SongName]{Art
 
 -- Example call to fetch lyrics for "Clarity"
 local exampleSong = "clarity"
-local exampleArtist = nil  -- No artist specified
+local exampleArtist = nil
 local lyrics = fetchLyrics(exampleSong, exampleArtist)
-sendMessage(lyrics)  -- Send the fetched lyrics as a message
+sendMessage(lyrics)
