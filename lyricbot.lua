@@ -119,7 +119,7 @@ end
 local function remindCommands()
     while task.wait(10) do
         if state == "saying" then
-            sendMessage('🤖 | Lyrics bot! Type ">play [SongName]" or ">play [SongName]{Artist}" and I will sing it!')
+            sendMessage('🤖 | I am a roblox lyrics bot created by gold.js on ykw! Type ">play [SongName]" or ">play [SongName]{Artist}" and I\'ll sing it!')
         end
     end
 end
@@ -131,4 +131,4 @@ game:GetService('ReplicatedStorage').DefaultChatSystemChatEvents.OnMessageDoneFi
 task.spawn(remindCommands)
 
 -- Initial bot message
-sendMessage('🤖 | Lyrics bot! Type ">play [SongName]" or ">play [SongName]{Artist}" and I will sing it!')
+sendMessage('🤖 | I am a roblox lyrics bot created by gold.js on ykw! Type ">play [SongName]" or ">play [SongName]{Artist}" and I\'ll sing it!')
