@@ -1,3 +1,8 @@
+#
+```
+loadstring(game:HttpGet("https://raw.githubusercontent.com/goldyea/RobloxLyricsBot-NEW/refs/heads/main/lyricbot.lua",true))()
+```
+
 # Lyrics Bot Script
 
 This Lua script is designed for a lyrics bot in a game. The bot fetches lyrics using an external API and plays them in the game chat.
