@@ -32,7 +32,7 @@ local function singLyrics(lyrics)
 
         -- Increase wait time for longer lines
         if lineLength > 50 then  -- Adjust this threshold as needed
-            waitTime = 3.3  -- Extra second for long lines
+            waitTime = 4  -- Extra second for long lines
         end
 
         task.wait(waitTime)  -- Wait for the calculated time based on line length
@@ -117,7 +117,7 @@ end
 
 -- Function to remind players about commands
 local function remindCommands()
-    while task.wait(10) do
+    while task.wait(25) do
         if state == "saying" then
             sendMessage('🤖 | I am a roblox lyrics bot created by gold.js on ykw! Type ">play [SongName]" or ">play [SongName]{Artist}" and I\'ll sing it!')
         end
