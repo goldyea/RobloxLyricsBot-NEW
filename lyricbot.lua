@@ -28,11 +28,11 @@ local function singLyrics(lyrics)
 
         -- Calculate wait time based on line length
         local lineLength = string.len(line)
-        local waitTime = 1  -- Default wait time for short lines
+        local waitTime = 2  -- Default wait time for short lines
 
         -- Increase wait time for longer lines
         if lineLength > 50 then  -- Adjust this threshold as needed
-            waitTime = 2  -- Extra second for long lines
+            waitTime = 3.3  -- Extra second for long lines
         end
 
         task.wait(waitTime)  -- Wait for the calculated time based on line length
