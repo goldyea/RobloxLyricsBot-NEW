@@ -12,10 +12,99 @@ end
 local httprequest = (syn and syn.request) or http and http.request or http_request or (fluxus and fluxus.request) or request
 
 local state = "saying"  -- Initial state
+local blacklist = {}  -- Dictionary to hold blacklisted users
 
 local function sendMessage(text)
     game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(text, "All")
 end
+
+-- GUI setup
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = game.CoreGui
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 300, 0, 200)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
+MainFrame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+MainFrame.Parent = ScreenGui
+
+local Title = Instance.new("TextLabel")
+Title.Text = "Lyrics Bot Control Panel"
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.Parent = MainFrame
+
+-- Add Blacklist Button
+local BlacklistButton = Instance.new("TextButton")
+BlacklistButton.Text = "Blacklist User"
+BlacklistButton.Size = UDim2.new(0.5, -10, 0, 30)
+BlacklistButton.Position = UDim2.new(0, 5, 0, 40)
+BlacklistButton.BackgroundColor3 = Color3.new(0.3, 0.3, 0.3)
+BlacklistButton.TextColor3 = Color3.new(1, 1, 1)
+BlacklistButton.Parent = MainFrame
+
+-- Unblacklist Button
+local UnblacklistButton = Instance.new("TextButton")
+UnblacklistButton.Text = "Unblacklist User"
+UnblacklistButton.Size = UDim2.new(0.5, -10, 0, 30)
+UnblacklistButton.Position = UDim2.new(0.5, 5, 0, 40)
+UnblacklistButton.BackgroundColor3 = Color3.new(0.3, 0.3, 0.3)
+UnblacklistButton.TextColor3 = Color3.new(1, 1, 1)
+UnblacklistButton.Parent = MainFrame
+
+-- Stop Singing Button
+local StopButton = Instance.new("TextButton")
+StopButton.Text = "Stop Singing"
+StopButton.Size = UDim2.new(1, -10, 0, 30)
+StopButton.Position = UDim2.new(0, 5, 0, 80)
+StopButton.BackgroundColor3 = Color3.new(0.3, 0.3, 0.3)
+StopButton.TextColor3 = Color3.new(1, 1, 1)
+StopButton.Parent = MainFrame
+
+-- Input field for username
+local UserInput = Instance.new("TextBox")
+UserInput.PlaceholderText = "Enter Username"
+UserInput.Size = UDim2.new(1, -10, 0, 30)
+UserInput.Position = UDim2.new(0, 5, 0, 120)
+UserInput.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+UserInput.TextColor3 = Color3.new(1, 1, 1)
+UserInput.Parent = MainFrame
+
+-- Function to add and remove users from the blacklist
+local function addToBlacklist(username)
+    blacklist[username] = true
+    sendMessage(username .. " has been blacklisted.")
+end
+
+local function removeFromBlacklist(username)
+    blacklist[username] = nil
+    sendMessage(username .. " has been removed from the blacklist.")
+end
+
+-- GUI Button Actions
+BlacklistButton.MouseButton1Click:Connect(function()
+    local username = UserInput.Text
+    if username and username ~= "" then
+        addToBlacklist(username)
+        UserInput.Text = ""
+    end
+end)
+
+UnblacklistButton.MouseButton1Click:Connect(function()
+    local username = UserInput.Text
+    if username and username ~= "" then
+        removeFromBlacklist(username)
+        UserInput.Text = ""
+    end
+end)
+
+StopButton.MouseButton1Click:Connect(function()
+    if state == "singing" then
+        state = "saying"
+        sendMessage('Stopped singing. You can request songs again.')
+    end
+end)
 
 -- Function to handle singing lyrics with dynamic pacing
 local function singLyrics(lyrics)
@@ -74,8 +163,9 @@ end
 
 -- Function to handle user messages
 local function onMessage(msgdata)
-    if msgdata.FromSpeaker == "Decideaside" then
-        return  -- Ignore messages from the bot itself
+    -- Ignore messages from the bot itself or blacklisted users
+    if msgdata.FromSpeaker == "Decideaside" or blacklist[msgdata.FromSpeaker] then
+        return
     end
 
     if string.lower(msgdata.Message) == '>stop' and state == "singing" then
@@ -127,8 +217,5 @@ end
 -- Connect the message event
 game:GetService('ReplicatedStorage').DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClientEvent:Connect(onMessage)
 
--- Start the reminder function in a separate thread
-task.spawn(remindCommands)
-
--- Initial bot message
-sendMessage('🤖 | I am a roblox lyrics bot created by gold.js on ykw! Type ">play [SongName]" or ">play [SongName]{Artist}" and I\'ll sing it!')
+-- Start command reminder loop
+remindCommands()
